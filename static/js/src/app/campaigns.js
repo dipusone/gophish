@@ -51,6 +51,7 @@ function launch() {
                     },
                     launch_date: moment($("#launch_date").val(), "MMMM Do YYYY, h:mm a").utc().format(),
                     send_by_date: send_by_date || null,
+                    parallilize: $("#parallelize_checkbox").prop("checked"),
                     groups: groups,
                 }
                 // Submit the campaign

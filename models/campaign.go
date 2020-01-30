@@ -19,6 +19,7 @@ type Campaign struct {
 	CreatedDate   time.Time `json:"created_date"`
 	LaunchDate    time.Time `json:"launch_date"`
 	SendByDate    time.Time `json:"send_by_date"`
+	Parallelize   bool      `json:"parallelize"`
 	CompletedDate time.Time `json:"completed_date"`
 	TemplateId    int64     `json:"-"`
 	Template      Template  `json:"template"`
@@ -510,14 +511,19 @@ func PostCampaign(c *Campaign, uid int64) error {
 	tx := db.Begin()
 	for _, g := range c.Groups {
 		// Insert a result for each target in the group
-		for _, t := range g.Targets {
+		for idx, t := range g.Targets {
 			// Remove duplicate results - we should only
 			// send emails to unique email addresses.
 			if _, ok := resultMap[t.Email]; ok {
 				continue
 			}
 			resultMap[t.Email] = true
-			sendDate := c.generateSendDate(recipientIndex, totalRecipients)
+			var sendDate time.Time
+			if c.Parallelize {
+				sendDate = c.generateSendDate(idx, len(g.Targets))
+			} else {
+				sendDate = c.generateSendDate(recipientIndex, totalRecipients)
+			}
 			r := &Result{
 				BaseRecipient: BaseRecipient{
 					Email:     t.Email,
